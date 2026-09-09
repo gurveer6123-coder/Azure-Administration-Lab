@@ -4,28 +4,30 @@
 
 This project demonstrates hands-on administration of a Microsoft Azure environment.
 
-The lab focuses on practical tasks commonly performed by Cloud Support Technicians, IT Support Specialists, Junior System Administrators, and Azure Administrators, including:
+The lab was designed to practice common tasks performed by Cloud Support Technicians, IT Support Specialists, Junior System Administrators, and Azure Administrators.
 
-- Resource organization
-- Virtual networking
-- Network security
-- Windows Server virtual machine deployment
-- Remote administration
-- Monitoring and logging
-- Role-Based Access Control (RBAC)
-- Resource tagging and locking
+The project covers:
+
+- Azure Resource Groups
+- Virtual Networks and Subnets
+- Network Security Groups
+- Windows Server Virtual Machines
+- Remote Desktop administration
+- Azure monitoring and logging
+- Role-Based Access Control
+- Resource tags and locks
 - Cost management
 - Azure Advisor
 - Service Health alerts
-- Azure Blob Storage
-- Shared Access Signatures (SAS)
-- Cross-region VNet peering
-
-The goal of this project was to build a small Azure environment while also practicing security, troubleshooting, monitoring, and cost-control techniques.
+- Azure Storage
+- Blob Storage
+- Shared Access Signatures
+- Global VNet Peering
+- Security and cost optimization
 
 ---
 
-# Technologies Used
+# Technologies and Services Used
 
 - Microsoft Azure
 - Azure Resource Manager
@@ -37,7 +39,7 @@ The goal of this project was to build a small Azure environment while also pract
 - Remote Desktop Protocol
 - Azure Monitor
 - Azure Activity Log
-- Azure RBAC
+- Azure IAM / RBAC
 - Azure Resource Tags
 - Azure Resource Locks
 - Azure Cost Management
@@ -50,7 +52,7 @@ The goal of this project was to build a small Azure environment while also pract
 
 ---
 
-# Lab Architecture
+# Environment Overview
 
 The lab used Azure resources across two regions.
 
@@ -68,41 +70,48 @@ The lab used Azure resources across two regions.
 - Network Security Group: `LAB-NSG-India`
 - Virtual Machine: `Lab-WinVM`
 - Operating System: Windows Server 2022
-- Private IP: `10.1.0.4`
+- Private IP Address: `10.1.0.4`
 
 The two virtual networks were later connected using Azure Global VNet Peering.
 
 ---
 
-# 1. Resource Group
+# 1. Azure Resource Group
 
-A resource group named:
+A Resource Group named:
 
 `Azure-Admin-Lab`
 
-was used to organize the Azure resources created throughout the project.
+was used to organize all resources created during the project.
 
-Resource Groups provide a logical management boundary for related Azure resources and make administration, monitoring, access control, and cleanup easier.
+Azure Resource Groups provide a logical container for resources and simplify:
+
+- Resource organization
+- Permissions
+- Monitoring
+- Cost tracking
+- Deployment
+- Cleanup
 
 ![Azure Resource Group](01-resource-group.png)
 
 ---
 
-# 2. Virtual Network
+# 2. Azure Virtual Network
 
-A virtual network named:
+A Virtual Network named:
 
 `Lab-VNet-India`
 
-was created in the Central India Azure region.
+was configured in the Central India Azure region.
 
-The VNet used the following address space:
+Address space:
 
 `10.1.0.0/16`
 
-The virtual network provides private IP addressing and network connectivity for Azure resources.
+Virtual Networks allow Azure resources to communicate using private IP addressing.
 
-![Virtual Network](02-vnet-india.png)
+![Azure Virtual Network](02-vnet-india.png)
 
 ---
 
@@ -112,13 +121,13 @@ A subnet was configured inside `Lab-VNet-India`.
 
 Configuration:
 
-- Address Space: `10.1.0.0/16`
+- VNet Address Space: `10.1.0.0/16`
 - Subnet Range: `10.1.0.0/24`
 - Starting Address: `10.1.0.0`
 
-The subnet provides a smaller network segment where the Windows Server virtual machine was deployed.
+The Windows Server VM was deployed inside this subnet.
 
-![Subnet Configuration](03-subnet.png)
+![Azure Subnet](03-subnet.png)
 
 ---
 
@@ -128,47 +137,52 @@ A Network Security Group named:
 
 `LAB-NSG-India`
 
-was created to control inbound and outbound traffic.
+was created to control traffic entering and leaving the Azure environment.
 
-Network Security Groups evaluate traffic using rules based on:
+NSG rules can evaluate traffic based on:
 
 - Source
 - Destination
-- Port
+- Source Port
+- Destination Port
 - Protocol
 - Priority
 - Allow or Deny action
 
-The NSG was associated with the lab network and virtual machine.
+The NSG was associated with the lab network resources.
 
 ![NSG Overview](04-nsg-overview.png)
 
 ---
 
-# 5. Securing RDP Access
+# 5. RDP Security Rule
 
 Remote Desktop Protocol uses TCP port:
 
 `3389`
 
-Initially, the VM could not be reached through RDP because inbound traffic was blocked by the default NSG security rules.
+Initially, RDP connectivity to the Azure VM failed because inbound traffic was being blocked.
 
-A custom rule named:
+A custom inbound security rule named:
 
 `ALLOWRDP`
 
-was created.
+was configured.
 
-Configuration included:
+The rule used:
 
-- Service: RDP
-- Protocol: TCP
-- Destination Port: `3389`
-- Action: Allow
-- Priority: `100`
-- Source: Restricted administrator public IP
+```text
+Protocol: TCP
+Service: RDP
+Destination Port: 3389
+Action: Allow
+Priority: 100
+Source: Restricted administrator public IP
+```
 
-Restricting the source IP instead of allowing RDP from the entire Internet reduces unnecessary exposure of the administrative port.
+Instead of allowing RDP from the entire Internet, the rule was restricted to the administrator's public IP address.
+
+This reduces unnecessary exposure of the RDP service.
 
 ![RDP Security Rule](05-rdp-security-rule.png)
 
@@ -180,38 +194,40 @@ A Windows Server virtual machine was deployed in Azure.
 
 Configuration:
 
-- Name: `Lab-WinVM`
+- VM Name: `Lab-WinVM`
 - Operating System: Windows Server 2022 Datacenter
 - Architecture: x64
-- VM Size: Standard B-series
 - Region: Central India
 - Virtual Network: `Lab-VNet-India`
 - Subnet: `default`
 - Private IP: `10.1.0.4`
 - Public IP: Configured for lab RDP access
 - OS Disk: Standard SSD
+- VM Size: Standard B-series
 
-Standard SSD storage and a smaller VM size were selected to reduce unnecessary lab costs.
+A lower-cost VM size and Standard SSD were selected because this environment was created for temporary lab use.
 
 ![Windows Server VM](06-windows-vm-overview.png)
 
 ---
 
-# 7. Verify VM Network Configuration
+# 7. VM Network Verification
 
-After connecting to the Windows Server VM, the following command was used:
+After successfully connecting to the Windows Server VM, the following command was executed:
 
 ```cmd
 ipconfig
 ```
 
-The VM received the following network configuration:
+The VM received:
 
-- IPv4 Address: `10.1.0.4`
-- Subnet Mask: `255.255.255.0`
-- Default Gateway: `10.1.0.1`
+```text
+IPv4 Address: 10.1.0.4
+Subnet Mask: 255.255.255.0
+Default Gateway: 10.1.0.1
+```
 
-This confirmed that the VM was correctly connected to the Azure subnet.
+This confirmed that the virtual machine was correctly connected to the Azure subnet.
 
 ![VM IP Configuration](08-vm-ipconfig.png)
 
@@ -219,9 +235,9 @@ This confirmed that the VM was correctly connected to the Azure subnet.
 
 # 8. Azure VM Monitoring
 
-Azure Monitor was used to review the health and performance of the virtual machine.
+Azure Monitor was used to observe virtual machine performance and health.
 
-Metrics included:
+Metrics reviewed included:
 
 - VM availability
 - CPU utilization
@@ -229,92 +245,94 @@ Metrics included:
 - Disk activity
 - Disk operations
 
-Monitoring helps administrators detect resource utilization problems and troubleshoot performance issues.
+Monitoring helps administrators identify performance problems and investigate abnormal resource utilization.
 
-![VM Monitoring](09-vm-monitoring.png)
+![Azure VM Monitoring](09-vm-monitoring.png)
 
 ---
 
 # 9. Azure Activity Log
 
-The Azure Activity Log was reviewed to track administrative operations performed on the VM.
+The Azure Activity Log was reviewed to track administrative operations performed on the virtual machine.
 
 Examples included:
 
 - Create or Update Virtual Machine
 - Add Management Locks
 
-The Activity Log provides information about:
+The Activity Log can help determine:
 
-- Operation performed
-- Status
-- Timestamp
-- Resource
-- Subscription
-- User or service that initiated the change
+- What operation occurred
+- When the operation occurred
+- Whether it succeeded or failed
+- Which Azure resource was affected
 
-This is useful for troubleshooting and auditing administrative activity.
+This information is useful for both troubleshooting and auditing.
 
-![Activity Log](10-activity-log.png)
+![Azure Activity Log](10-activity-log.png)
 
 ---
 
-# 10. Role-Based Access Control
+# 10. Azure Role-Based Access Control
 
 Azure Access Control (IAM) was reviewed to understand Role-Based Access Control.
 
-The lab account inherited the `Owner` role from the subscription scope.
+The account used during the lab inherited the:
+
+`Owner`
+
+role from the subscription.
 
 Common Azure roles include:
 
-### Reader
+## Reader
 
-Can view Azure resources but cannot modify them.
+Can view resources but cannot modify them.
 
-### Contributor
+## Contributor
 
-Can create and manage resources but cannot assign Azure RBAC permissions.
+Can create and manage Azure resources but cannot assign RBAC permissions.
 
-### Virtual Machine Contributor
+## Virtual Machine Contributor
 
-Can manage virtual machines without receiving unrestricted control over all resources.
+Can manage virtual machines without having full control over every Azure resource.
 
-### Owner
+## Owner
 
-Provides full resource management access and permission to assign Azure roles.
+Provides full resource management access and can assign Azure roles.
 
-RBAC allows organizations to apply the principle of least privilege.
+Azure RBAC helps organizations implement the principle of least privilege.
 
 ![Azure RBAC](11-rbac-iam.png)
 
 ---
 
-# 11. Resource Tags
+# 11. Azure Resource Tags
 
-A resource tag was added to identify the VM as a lab resource.
+A resource tag was added to the VM.
 
 Tag:
 
 `Environment : LAB`
 
-Tags can be used to organize Azure resources by:
+Tags can help organize Azure resources based on:
 
 - Environment
-- Department
 - Project
+- Department
+- Application
 - Owner
 - Cost center
-- Application
 
-They are also useful for reporting and cost analysis.
+Tags are also useful when analyzing cloud spending.
 
 ![Azure Resource Tags](12-resource-tags.png)
 
 ---
 
-# 12. Resource Lock
+# 12. Azure Resource Lock
 
-A Delete Lock was configured on the virtual machine.
+A Delete Lock was configured on the VM.
 
 Lock name:
 
@@ -324,49 +342,52 @@ Lock type:
 
 `Delete`
 
-The lock protects the VM from accidental deletion.
+The lock protects the virtual machine from accidental deletion.
 
-The lock must first be removed before intentionally deleting the protected resource.
+The lock must be removed before intentionally deleting the protected resource.
 
-![Resource Lock](13-resource-lock.png)
+![Azure Resource Lock](13-resource-lock.png)
 
 ---
 
-# 13. Cost Management
+# 13. Azure Cost Management
 
-Azure Cost Management was reviewed to understand:
+Azure Cost Management was reviewed to understand cloud resource spending and budgeting.
 
-- Current cloud spending
+Topics practiced included:
+
+- Current spending
 - Forecasted spending
 - Resource costs
-- Budgeting
+- Monthly budgets
 - Cost alerts
+- Cost optimization
 
-Cost monitoring is especially important in cloud environments because resources can continue generating charges while they remain deployed.
+Cloud administrators must monitor resource usage because deployed services can continue generating charges even when they are not actively being used.
 
 ![Azure Cost Management](14-cost-budget.png)
 
-> Note: Sensitive billing and account information should always be removed before publishing screenshots publicly.
+> The budget image in this repository is a sanitized/illustrative view used to document the cost-management portion of the lab. No account credentials or sensitive billing information are included.
 
 ---
 
-# 14. Resource Visualizer
+# 14. Azure Resource Visualizer
 
-Azure Resource Visualizer was used to view relationships between the resources in the lab.
+Azure Resource Visualizer was used to understand relationships between deployed resources.
 
-The diagram displayed dependencies between resources such as:
+The visualizer displayed components such as:
 
 - Virtual Machine
 - Network Interface
 - Public IP
 - Virtual Networks
 - Network Security Groups
-- OS Disk
+- Managed Disk
 - Storage Account
 - Service Health Alert
 - Action Group
 
-This is useful for understanding how Azure resources depend on each other.
+This provides administrators with a visual understanding of resource dependencies.
 
 ![Azure Resource Visualizer](15-resource-visualizer.png)
 
@@ -374,35 +395,35 @@ This is useful for understanding how Azure resources depend on each other.
 
 # 15. Azure Advisor
 
-Azure Advisor was reviewed for recommendations relating to:
+Azure Advisor was reviewed to examine Microsoft recommendations for the Azure environment.
+
+Advisor provides recommendations across areas including:
 
 - Cost
 - Security
 - Reliability
-- Operational Excellence
 - Performance
+- Operational Excellence
 
-Advisor analyzes deployed resources and provides recommendations based on Azure best practices.
+Some recommendations were intentionally not implemented because they were designed for production workloads and would unnecessarily increase the cost of a temporary lab environment.
 
-Not every recommendation was implemented because some production-oriented features would unnecessarily increase costs for a temporary lab.
-
-Examples of recommendations reviewed included:
+Examples included:
 
 - Larger VM sizes
 - Premium storage
 - NAT Gateway
-- Higher availability
-- VM Scale Sets
+- Higher availability configurations
+- Virtual Machine Scale Sets
 
-This demonstrated that administrators should evaluate recommendations based on business and technical requirements rather than automatically implementing every suggestion.
+This demonstrated that administrators should evaluate recommendations based on workload requirements rather than automatically implementing every suggestion.
 
 ![Azure Advisor](16-azure-advisor.png)
 
 ---
 
-# 16. Azure Service Health Alert
+# 16. Azure Service Health
 
-Azure Service Health was configured to provide notifications about Microsoft Azure infrastructure problems.
+Azure Service Health was configured to monitor Azure infrastructure problems.
 
 A Service Health alert named:
 
@@ -410,21 +431,21 @@ A Service Health alert named:
 
 was created.
 
-The alert monitors:
+The alert monitored Azure service issues affecting the selected subscription and region.
 
-- Azure service issues
-- Selected Azure regions
-- Subscription-level service health
+Azure Service Health can provide information about:
 
-The `Microsoft.Insights` resource provider was also registered at the subscription level to support Azure Monitor alert functionality.
+- Service incidents
+- Planned maintenance
+- Health advisories
 
-Service Health alerts allow administrators to respond quickly when Azure infrastructure issues affect their workloads.
+The `Microsoft.Insights` resource provider was also registered at the subscription level to support Azure monitoring and alert functionality.
 
-![Service Health Alert](17-service-health-alert.png)
+![Azure Service Health Alert](17-service-health-alert.png)
 
 ---
 
-# 17. Azure Storage
+# 17. Azure Storage Account
 
 An Azure Storage Account named:
 
@@ -432,18 +453,18 @@ An Azure Storage Account named:
 
 was created.
 
-The storage environment used:
+The storage configuration included:
 
 - Standard performance
-- Locally Redundant Storage
-- Secure transfer
+- Locally Redundant Storage (LRS)
+- Secure transfer enabled
 - TLS 1.2
 - Microsoft-managed encryption
 - Anonymous Blob access disabled
 
-Standard LRS was selected because it provides a cost-effective storage configuration for a temporary lab.
+LRS was selected because it provided an appropriate low-cost configuration for this temporary lab.
 
-![Azure Storage](18-storage-account.png)
+![Azure Storage Account](18-storage-account.png)
 
 ---
 
@@ -455,13 +476,13 @@ A Blob Storage container named:
 
 was created.
 
-A test file named:
+A small test file named:
 
 `azure-test.txt`
 
 was uploaded to the container.
 
-The storage structure is:
+Azure Blob Storage follows the hierarchy:
 
 ```text
 Storage Account
@@ -471,7 +492,7 @@ Storage Account
              +-- Blob
 ```
 
-For this lab:
+For this project:
 
 ```text
 labstorageazure2026
@@ -481,7 +502,7 @@ labstorageazure2026
              +-- azure-test.txt
 ```
 
-Azure Blob Storage can be used for:
+Common Blob Storage use cases include:
 
 - Documents
 - Images
@@ -489,162 +510,172 @@ Azure Blob Storage can be used for:
 - Application files
 - Backups
 - Archives
-- Logs
+- Log files
 - Analytics datasets
 
-![Blob Container](19-blob-container.png)
+![Azure Blob Container](19-blob-container.png)
 
 ---
 
 # 19. Shared Access Signature
 
-The Blob container was configured as private.
+The Blob container was configured without anonymous public access.
 
-A Shared Access Signature was then generated to provide temporary delegated access to the storage resource.
+A Shared Access Signature was generated to provide temporary access to the storage resource.
 
-The SAS configuration demonstrated concepts including:
+The SAS configuration demonstrated:
 
-- Read-only access
-- Expiration time
-- HTTPS access
 - Temporary authorization
+- Read-only access
+- Expiration times
+- HTTPS access
+- Controlled access to private data
 
-A SAS token should be treated like a credential and should never be committed to a public GitHub repository.
+A SAS token functions similarly to a temporary credential and should never be committed to a public GitHub repository.
 
-The actual SAS token used in the lab is intentionally not included in this repository.
+The actual SAS token used during the lab is therefore not included in this project.
 
 ---
 
 # 20. Global VNet Peering
 
-The two Azure virtual networks were connected using VNet Peering.
+The Canada Central and Central India virtual networks were connected using Azure VNet Peering.
 
-Networks:
+The networks were:
 
-### Canada Central
+## Canada Central
 
 ```text
 Lab-VNet
 10.0.0.0/16
 ```
 
-### Central India
+## Central India
 
 ```text
 Lab-VNet-India
 10.1.0.0/16
 ```
 
-The address ranges did not overlap, allowing Azure to establish the peering.
+Because the IP address spaces did not overlap, Azure could establish the peering successfully.
 
-The resulting status showed:
+The peering displayed:
 
-`Connected`
+```text
+Peering State: Connected
+Peering Sync Status: Fully Synchronized
+```
 
-and:
+Because the VNets were located in different Azure regions, this configuration demonstrated Global VNet Peering.
 
-`Fully Synchronized`
+Global VNet Peering allows Azure resources in separate regions to communicate privately through Microsoft's network infrastructure.
 
-Because the virtual networks are located in different Azure regions, this represents Global VNet Peering.
-
-Global VNet Peering allows Azure resources in different regions to communicate privately using Microsoft's network infrastructure.
-
-![VNet Peering](20-vnet-peering.png)
+![Azure VNet Peering](20-vnet-peering.png)
 
 ---
 
-# Troubleshooting
+# Troubleshooting Scenario
 
 ## RDP Connection Failure
 
-One of the main troubleshooting scenarios in this project occurred when Remote Desktop initially failed to connect to the Windows Server VM.
+One of the major troubleshooting exercises during this lab involved Remote Desktop access.
 
-Azure NSG diagnostics showed that traffic to port:
+Initially, the Windows Server VM could not be reached over RDP.
+
+Azure networking diagnostics showed that inbound traffic to TCP port:
 
 `3389`
 
 was being denied.
 
-The blocking rule was the default:
+The default NSG rule:
 
 `DenyAllInBound`
 
-### Resolution
+was blocking the connection.
 
-A custom inbound NSG rule was created with:
+## Resolution
+
+A custom inbound NSG rule was created.
 
 ```text
+Rule Name: ALLOWRDP
 Protocol: TCP
-Port: 3389
+Destination Port: 3389
 Source: Administrator Public IP
 Action: Allow
 Priority: 100
 ```
 
-After the rule was applied, RDP connectivity was successfully established.
+After applying the security rule, the RDP connection succeeded.
 
-This demonstrated how Network Security Groups can directly affect Azure VM connectivity.
+This exercise demonstrated how Network Security Groups affect Azure VM connectivity and how security rules can be used to troubleshoot network access.
 
 ---
 
 # Security Practices Demonstrated
 
-The project included several security concepts.
+Several security practices were included in the lab.
 
-## Restricted RDP
+## Restricted RDP Access
 
-Port `3389` was limited to the administrator source IP instead of allowing access from all Internet addresses.
+RDP port `3389` was limited to a specific administrator source IP instead of being open to the entire Internet.
 
-## Private Blob Container
+## Network Security Groups
 
-Anonymous Blob access was disabled.
+NSGs were used to control inbound and outbound Azure network traffic.
+
+## Private Blob Storage
+
+Anonymous public access to the Blob container was disabled.
 
 ## Shared Access Signature
 
-Temporary access was provided through a limited SAS instead of making the storage container public.
+Temporary delegated access was provided using a SAS rather than making the container publicly available.
 
-## HTTPS
+## HTTPS and TLS
 
-Secure transport was used when accessing Azure Storage.
+Secure transfer and TLS 1.2 were used for Azure Storage.
 
 ## Azure RBAC
 
-Role assignments were reviewed through Azure IAM.
+Azure IAM role assignments were reviewed to understand least-privilege access.
 
 ## Resource Lock
 
-A Delete Lock protected the VM from accidental deletion.
+A Delete Lock protected the virtual machine from accidental deletion.
 
-## TLS
+## Sensitive Information Protection
 
-Azure Storage was configured to require TLS 1.2.
+Passwords, SAS tokens, subscription IDs, public IP addresses, and other sensitive values were removed from screenshots before publishing the project.
 
 ---
 
 # Cost Optimization
 
-Because the lab used limited Azure credits, several cost-control practices were used.
+Because the project used limited Azure credits, cost control was considered throughout the lab.
 
-These included:
+Cost-saving practices included:
 
-- Selecting a lower-cost VM size
-- Using Standard SSD instead of Premium SSD
+- Using a smaller B-series VM
+- Selecting Standard SSD
 - Using Standard LRS storage
 - Avoiding unnecessary additional disks
 - Avoiding Azure Firewall
 - Avoiding Azure Bastion
 - Avoiding NAT Gateway
 - Avoiding unnecessary backup services
-- Reviewing Azure Advisor before applying recommendations
-- Monitoring current Azure spending
+- Reviewing Advisor recommendations before applying them
+- Monitoring Azure costs
+- Reviewing forecasted spending
 - Using budgets and alerts
-- Deallocating the VM when it was not required
+- Deallocating the VM when not required
 
-A VM should be stopped from the Azure portal until its status becomes:
+When a virtual machine is not required, it should be stopped from the Azure portal until the status becomes:
 
 `Stopped (deallocated)`
 
-When a VM is deallocated, compute billing stops, although storage and some related resources may still generate small charges.
+When a VM is deallocated, Azure compute billing stops, although storage and some associated resources may continue generating small charges.
 
 ---
 
@@ -653,18 +684,18 @@ When a VM is deallocated, compute billing stops, although storage and some relat
 This project demonstrates practical experience with:
 
 - Microsoft Azure administration
-- Resource Groups
+- Azure Resource Groups
 - Azure Virtual Networks
-- IPv4 addressing
+- IPv4 networking
 - Subnetting
 - Network Security Groups
 - Windows Server deployment
 - Remote Desktop administration
-- Azure VM troubleshooting
+- Azure networking troubleshooting
 - Azure Monitor
 - Azure Activity Logs
 - Azure RBAC
-- Azure Tags
+- Resource Tags
 - Resource Locks
 - Azure Cost Management
 - Azure Advisor
@@ -674,14 +705,14 @@ This project demonstrates practical experience with:
 - Shared Access Signatures
 - VNet Peering
 - Cross-region networking
-- Cloud security
+- Azure security
 - Cloud cost optimization
 
 ---
 
 # Key Takeaways
 
-This lab provided practical experience building and administering an Azure environment from the ground up.
+This lab provided hands-on experience creating and administering a small Azure environment.
 
 The overall workflow included:
 
@@ -701,13 +732,13 @@ Network Security Group
 Windows Server VM
       |
       v
-RDP Administration
+Remote Administration
       |
       v
-Monitoring + Logging
+Monitoring and Logging
       |
       v
-RBAC + Resource Protection
+RBAC and Resource Protection
       |
       v
 Cost Management
@@ -719,38 +750,41 @@ Azure Storage
 Global VNet Peering
 ```
 
-The project also demonstrated that Azure administration involves more than deploying resources. Administrators must continuously consider:
+The project demonstrated that Azure administration involves more than creating cloud resources.
+
+Administrators must also consider:
 
 - Security
-- Availability
+- Networking
+- Permissions
 - Monitoring
 - Troubleshooting
-- Permissions
 - Cost
 - Resource organization
+- Availability
 
 ---
 
 # Cleanup
 
-After completing the project, unused Azure resources should be stopped or removed to prevent unnecessary charges.
+After completing the project, unused Azure resources should be stopped or deleted to prevent unnecessary charges.
 
-Recommended cleanup process:
+Recommended cleanup steps:
 
 1. Stop the Windows Server VM.
-2. Verify the VM shows `Stopped (deallocated)`.
+2. Confirm the status is `Stopped (deallocated)`.
 3. Remove the `Protect-LabVM` Delete Lock before deleting the VM.
 4. Delete unused Public IP resources.
 5. Delete unused Network Interfaces.
 6. Delete unused Managed Disks.
-7. Delete temporary Blob Storage resources.
-8. Remove VNet peering if it is no longer required.
-9. Delete the `Azure-Admin-Lab` Resource Group when the environment is no longer needed.
+7. Delete temporary Blob Storage resources if no longer needed.
+8. Remove VNet Peering if it is no longer needed.
+9. Delete the `Azure-Admin-Lab` Resource Group after all documentation is complete.
 
 ---
 
-## Project Status
+# Project Status
 
 **Completed**
 
-This lab was created as part of my hands-on practice in Microsoft Azure administration, networking, security, monitoring, storage, and cloud resource management.
+This project was created as part of my hands-on practice with Microsoft Azure administration, networking, Windows Server, security, monitoring, storage, access control, troubleshooting, and cloud cost management.
